@@ -12,29 +12,31 @@ def get_duration(filename):
     return clip.duration
 
 def run(origins, videos, dests):
+    clips = []
+    
     for i in range(0, len(videos)):
         j = 0
 
         rate = get_duration(origins[i])
-        n = int(rate / 3)
-        pc = rate % 3
+        n = int(rate / 3.3)
+        pc = rate % 3.3
 
-        clips = []
 
         for j in range(0, n):
-            base = j * 3
-            cmd = "ffmpeg -ss {} -i {} -r 29.97 -to {} -vcodec copy -acodec copy -async 1 -strict -2 {}.mp4 -y".format(base, origins[i], 3, os.path.join(dests[i], str(j)))
+            base = j * 4
+            cmd = "ffmpeg -ss {} -i {} -r 29.97 -to {} -vcodec copy -acodec copy -async 1 -strict -2 {}.mp4 -y".format(base, origins[i], 3.3, os.path.join(dests[i], str(j)))
             clips.append(os.path.join(dests[i], str(j)) + '.mp4')
             os.system(cmd)
 
-        base = n * 3
-        cmd = "ffmpeg -ss {} -i {} -r 29.97 -to {} -vcodec copy -acodec copy -async 1 -strict -2 {}.mp4 -y".format(base, origins[i], 3, os.path.join(dests[i], str(n)))
+        base = n * 4
+        cmd = "ffmpeg -ss {} -i {} -r 29.97 -to {} -vcodec copy -acodec copy -async 1 -strict -2 {}.mp4 -y".format(base, origins[i], 3.3, os.path.join(dests[i], str(n)))
         clips.append(os.path.join(dests[i], str(n)) + '.mp4')
         os.system(cmd)
 
     with open(file, 'a') as f:
         for clip in clips:
-            f.writeline(clip)
+            f.write(clip)
+            f.write('\n')
 
 if(__name__ == '__main__'):
     files = glob.glob(origin + "/*.mp4")
@@ -46,7 +48,7 @@ if(__name__ == '__main__'):
             os.makedirs(path)
 
     processes = []
-    n_p = 8
+    n_p = 1
 
     for i in range(n_p):
         p = Process(target=run, args=(files, videos, paths))

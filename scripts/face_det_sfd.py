@@ -1,3 +1,4 @@
+from genericpath import exists
 import os
 import cv2
 import glob
@@ -11,10 +12,18 @@ def run(gpu, files):
     print('gpu={},n_files={}'.format(gpu, len(files)))
     tic = time.time()
     count = 0
+
     for (img_name, savename) in files:
-        I = cv2.imread(img_name)
-        points_list = fa.get_landmarks(I)
-        
+        try:
+            I = cv2.imread(img_name)
+            points_list = fa.get_landmarks(I)
+
+        except:     
+            with open("./error_log.txt", '+a') as f:
+                f.write(img_name)
+                f.write('\n')
+                continue
+              
         with open(savename, 'w') as f:
             if(points_list is not None):
                 for points in points_list:
@@ -25,7 +34,7 @@ def run(gpu, files):
         count += 1
         if(count % 1000 == 0):
             print('dst={},eta={}'.format(savename, (time.time()-tic)/(count) * (len(files) - count) / 3600.0))
-       
+        
 
 if(__name__ == '__main__'):
     with open('imgs.txt', 'r') as f:
@@ -34,20 +43,18 @@ if(__name__ == '__main__'):
     data = []
 
     for folder in folders:
-        files = glob.glob(folder + "/*")
+        files = glob.glob(folder + "/*.jpg")
         for f in files:
-            data.append(f)
-
-    data = [(name, name.replace('.jpg', '.txt')) for name in data]
-    for (_, dst) in data:
-        dir, _ = os.path.split(dst)
-        if(not os.path.exists(dir)):
-            os.makedirs(dir)
-       
+            txt = f.replace('.jpg', '.txt')
+            if os.path.exists(txt):
+                continue
+            data.append((f, txt))
+        
     processes = []
-    n_p = 8
+    n_p = 3
     #gpus = ['0']
     bs = len(data) // n_p
+
     for i in range(n_p):
         if(i == n_p - 1):
             bs = len(data)
@@ -55,6 +62,7 @@ if(__name__ == '__main__'):
         data = data[bs:]
         p.start()
         processes.append(p)
+
     assert(len(data) == 0)
     for p in processes:
         p.join()

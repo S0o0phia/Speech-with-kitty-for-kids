@@ -128,23 +128,12 @@ while i < num:
 
 i = 0
 f = open('./result.align', 'a', encoding='utf-8')
-f.write('0 ')
-f.write(str(ij_list[0][0]-1))
-f.write(' ')
-f.write('sil')
-f.write('\n')
+str_line = '0 ' + str(ij_list[0][0]-1) + ' sil\n'
+f.write(str_line)
 while i < num:
-    f.write(str(ij_list[i][0]))
-    f.write(' ')
-    f.write(str(ij_list[i][1]))
-    f.write(' ')
-    f.write(str(value_list[i]))
-    f.write('\n')
+    str_line = str(ij_list[i][0]) + ' ' + str(ij_list[i][1]) + ' ' +str(value_list[i]) + '\n'
+    f.write(str_line)
     i += 1
-f.write(str(ij_list[i-1][1]+1))
-f.write(' ')
-f.write(str(len(y)))
-f.write(' ')
-f.write('sil')
-f.write('\n')
+str_line = str(ij_list[i-1][1]+1) + ' ' + str(len(y)) + ' sil\n'
+f.write(str_line)
 f.close()

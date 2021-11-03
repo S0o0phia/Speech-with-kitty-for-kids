@@ -46,6 +46,7 @@ if(__name__ == '__main__'):
         files = glob.glob(folder + "/*.jpg")
         for f in files:
             txt = f.replace('.jpg', '.txt')
+            txt = txt.replace('GRID_imgs/', 'GRID/landmarks/')
             if os.path.exists(txt):
                 continue
             data.append((f, txt))

@@ -81,8 +81,6 @@ def anno_img(img_dir, anno_dir, save_dir):
             
             shapes.append(anno[17:])        
 
-    print(shapes)
-
     front256 = get_position(256)
     M_prev = None
     for (shape, file) in zip(shapes, files):
@@ -93,7 +91,6 @@ def anno_img(img_dir, anno_dir, save_dir):
         (x, y) = front256[-20:].mean(0).astype(np.int32)
         w = 160//2
         img = img[y-w//2:y+w//2,x-w:x+w,...]
-        print(os.path.join(save_dir, file))
         cv2.imwrite(os.path.join(save_dir, file), img)
 
 def run(files):
@@ -108,7 +105,7 @@ def run(files):
 
 
 if(__name__ == '__main__'):    
-    with open('imgs.txt', 'r') as f:
+    with open('paths.txt', 'r') as f:
         data = [line.strip() for line in f.readlines()]
         data = list(set([os.path.split(file)[0] for file in data]))
     
@@ -122,7 +119,7 @@ if(__name__ == '__main__'):
     data = list(zip(data, annos, targets))
 
     processes = []
-    n_p = 8
+    n_p = 4
     bs = len(data) // n_p
     for i in range(n_p):
         if(i == n_p - 1):

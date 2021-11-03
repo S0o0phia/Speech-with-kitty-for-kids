@@ -4,12 +4,13 @@ import cv2
 import torch
 import numpy as np
 import editdistance
-import korean_chars
+from korean_chars import getChars
 from cvtransforms import *
 from torch.utils.data import Dataset
 
 class MyDataset(Dataset):
-    letters = korean_chars.getChars()
+    letters = getChars()
+    letters.append(' ')
 
     def __init__(self, video_path, anno_path, file_list, vid_pad, txt_pad, phase):
         self.anno_path = anno_path
@@ -23,12 +24,12 @@ class MyDataset(Dataset):
         self.data = []
         for vid in self.videos:
             items = vid.split('/')
-            self.data.append((vid, items[-4], items[-1]))
+            self.data.append((vid, items[-2], items[-1]))
         
     def __getitem__(self, idx):
         (vid, spk, name) = self.data[idx]
         vid = self._load_vid(vid)
-        anno = self._load_anno(os.path.join(self.anno_path, spk, 'align', name + '.align'))
+        anno = self._load_anno(os.path.join(self.anno_path, spk, name + '.align'))
 
         if(self.phase == 'train'):
             vid = HorizontalFlip(vid)
@@ -59,7 +60,7 @@ class MyDataset(Dataset):
         return array
     
     def _load_anno(self, name):
-        with open(name, 'r') as f:
+        with open(name, 'r', encoding='utf-8') as f:
             lines = [line.strip().split(' ') for line in f.readlines()]
             txt = [line[2] for line in lines]
             txt = list(filter(lambda s: not s.upper() in ['SIL', 'SP'], txt))

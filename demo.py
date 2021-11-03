@@ -7,14 +7,10 @@ import numpy as np
 import face_alignment
 from model import LipNet
 from dataset import MyDataset
+from PIL import ImageFont, ImageDraw, Image
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import torch.nn.init as init
-import torch.nn.functional as F
-from torch.utils.data import DataLoader
-
 
 def get_position(size, padding=0.25):
     
@@ -49,20 +45,36 @@ def output_video(p, txt, dst):
     files = os.listdir(p)
     files = sorted(files, key=lambda x: int(os.path.splitext(x)[0]))
 
-    font = cv2.FONT_HERSHEY_SIMPLEX
+    #font = cv2.FONT_HERSHEY_SIMPLEX
     
     for file, line in zip(files, txt):
         img = cv2.imread(os.path.join(p, file))
+        font = ImageFont.truetype("fonts/gulim.ttc", 40)
+
         h, w, _ = img.shape
-        img = cv2.putText(img, line, (w//8, 11*h//12), font, 0.8, (0, 0, 0), 3, cv2.LINE_AA)
-        img = cv2.putText(img, line, (w//8, 11*h//12), font, 0.8, (255, 255, 255), 0, cv2.LINE_AA)  
+        img = Image.fromarray(img)
+        draw = ImageDraw.Draw(img)
+        text = line
+        draw.text((w // 8, 11 * h // 12), text, font=font, fill=(255, 255, 255))
+        img = np.array(img)
+        cv2.imwrite(os.path.join(p, file), img)
+
+        
+    cmd = 'ffmpeg -y -i {}/%d.jpg -r 25 "{}"'.format(p, dst)
+    os.system(cmd)
+
+'''
+        img = cv2.imread(os.path.join(p, file))
+        h, w, _ = img.shape
+        img = cv2.putText(img, line, (w // 8, 11 * h // 12), font, 0.8, (0, 0, 0), 3, cv2.LINE_AA)
+        img = cv2.putText(img, line, (w // 8, 11 * h // 12), font, 0.8, (255, 255, 255), 0, cv2.LINE_AA)  
         h = h // 2
         w = w // 2
         img = cv2.resize(img, (w, h))     
         cv2.imwrite(os.path.join(p, file), img)
+        '''
     
-    cmd = 'ffmpeg -y -i {}/%d.jpg -r 25 "{}"'.format(p, dst)
-    os.system(cmd)
+    
 
 def transformation_from_points(points1, points2):
     points1 = points1.astype(np.float64)
@@ -116,7 +128,6 @@ def load_video(file):
             img = cv2.resize(img, (128, 64))
             video.append(img)
     
-    
     video = np.stack(video, axis=0).astype(np.float32)
     video = torch.FloatTensor(video.transpose(3, 0, 1, 2)) / 255.0
 
@@ -155,7 +166,8 @@ if(__name__ == '__main__'):
     video, img_p = load_video(sys.argv[1])
     y = model(video[None,...].cuda())
     txt = ctc_decode(y[0])
-    
+    print(txt[-1])
+
     output_video(img_p, txt, sys.argv[2])
     
     shutil.rmtree(img_p)

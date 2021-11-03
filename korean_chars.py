@@ -8,3 +8,5 @@ def getChars():
             temp = line.split('\t')
             for chr in temp:
                 chars.append(chr)
+
+    return chars

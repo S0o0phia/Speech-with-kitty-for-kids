@@ -397,3 +397,6 @@
 흐	흑	흒	흓	흔	흕	흖	흗	흘	흙	흚	흛	흜	흝	흞	흟	흠	흡	흢	흣	흤	흥	흦	흧	흨	흩	흪	흫
 희	흭	흮	흯	흰	흱	흲	흳	흴	흵	흶	흷	흸	흹	흺	흻	흼	흽	흾	흿	힀	힁	힂	힃	힄	힅	힆	힇
 히	힉	힊	힋	힌	힍	힎	힏	힐	힑	힒	힓	힔	힕	힖	힗	힘	힙	힚	힛	힜	힝	힞	힟	힠	힡	힢	힣
+1   2   3   4   5   6   7   8   9   0   a   b   c   d   e   f   g   h   i   j   k   l   m   n   o   p   q
+r   s   t   u   v   w   x   y   z   A   B   C   D   E   F   G   H   I   J   K   L   M   N   O   P   Q   R
+S   T   U   V   W   X   Y   Z   

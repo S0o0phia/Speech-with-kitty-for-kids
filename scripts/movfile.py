@@ -1,22 +1,32 @@
-'''
+
 import os
 import glob
 from shutil import copy
 
+def make_txt(arr, type):
+    for f in arr:
+#    files = glob.glob(folder + "/*")
+#    for f in files:
+        lip = f.replace('../GRID_imgs/', '')
+        lip = lip + '\n'
+
+        with open(f'../data/swk_{type}.txt','+a') as t:
+            t.write(lip)
+
 with open('imgs.txt', 'r') as f:
     folders = [line.strip() for line in f.readlines()]
 
-data = []
+if __name__ == '__main__':
+    pnt = len(folders) // 5
+    train = folders[pnt:]
+    val = folders[:pnt]
+    make_txt(train, 'train')
+    make_txt(val, 'val')
 
-for folder in folders:
-    files = glob.glob(folder + "/*.txt")
-    for f in files:
-        txt = f.replace('GRID_imgs/', 'GRID/landmarks/')
-        path, _ = os.path.split(txt)
-        if(not os.path.exists(path)):
-            os.makedirs(path)
-        copy(f, txt)
-'''
+
+'''     
+    if(not os.path.exists(wav)):
+        os.remove(align)
 
 with open('imgs.txt', 'r') as f:
     lines = f.readlines()
@@ -24,3 +34,4 @@ with open('imgs.txt', 'r') as f:
         for line in lines:
             line = line.replace('\n', '')
             d.write(line + '/\n')
+'''

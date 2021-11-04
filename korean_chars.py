@@ -5,7 +5,7 @@ def getChars():
         lines = f.readlines()
         for line in lines:
             line = line.replace('\n', '')
-            temp = line.split('\t')
+            temp = line.split(' ')
             for chr in temp:
                 chars.append(chr)
 

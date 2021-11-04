@@ -16,13 +16,13 @@ class LipNet(torch.nn.Module):
         self.conv3 = nn.Conv3d(64, 96, (3, 3, 3), (1, 1, 1), (1, 1, 1))     
         self.pool3 = nn.MaxPool3d((1, 2, 2), (1, 2, 2))
         
-        self.gru1  = nn.GRU(96*4*8, 256, 1, bidirectional=True)
+        self.gru1  = nn.GRU(96 * 4 * 8, 256, 1, bidirectional=True)
         self.gru2  = nn.GRU(512, 256, 1, bidirectional=True)
         
         self.FC    = nn.Linear(512, 27+1)
         self.dropout_p  = dropout_p
 
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.LeakyReLU(inplace=True)
         self.dropout = nn.Dropout(self.dropout_p)        
         self.dropout3d = nn.Dropout3d(self.dropout_p)  
         self._init()

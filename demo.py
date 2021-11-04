@@ -112,6 +112,7 @@ def load_video(file):
     
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False, device='cuda')
     points = [fa.get_landmarks(I) for I in array]
+    print(points)
     
     front256 = get_position(256)
     video = []
@@ -138,7 +139,7 @@ def ctc_decode(y):
     y = y.argmax(-1)
     t = y.size(0)
     result = []
-    for i in range(t+1):
+    for i in range(t + 1):
         result.append(MyDataset.ctc_arr2txt(y[:i], start=1))
     return result
         

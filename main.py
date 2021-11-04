@@ -85,14 +85,13 @@ def test(model, net):
         return (np.array(loss_list).mean(), np.array(wer).mean(), np.array(cer).mean())
     
 def train(model, net):
-    
     dataset = MyDataset(opt.video_path,
         opt.anno_path,
         opt.train_list,
         opt.vid_padding,
         opt.txt_padding,
         'train')
-        
+    
     loader = dataset2dataloader(dataset) 
     optimizer = optim.Adam(model.parameters(),
                 lr = opt.base_lr,
@@ -105,14 +104,17 @@ def train(model, net):
     
     train_wer = []
     for epoch in range(opt.max_epoch):
-        for (i_iter, input) in enumerate(loader.dataset):
+
+        for i_iter in range(len(loader)):
+            input = next(iter(loader))
+#        for (i_iter, input) in enumerate(loader.dataset):
             model.train()
             vid = input.get('vid').cuda()
             txt = input.get('txt').cuda()
             vid_len = input.get('vid_len')
             txt_len = input.get('txt_len')
             
-            print(vid.size())
+#            print(vid.size())
             
             optimizer.zero_grad()
             y = net(vid)
@@ -122,9 +124,7 @@ def train(model, net):
                 optimizer.step()
             
             tot_iter = i_iter + epoch*len(loader)
-            
             pred_txt = ctc_decode(y)
-            
             truth_txt = [MyDataset.arr2txt(txt[_], start=1) for _ in range(txt.size(0))]
             train_wer.extend(MyDataset.wer(pred_txt, truth_txt))
             

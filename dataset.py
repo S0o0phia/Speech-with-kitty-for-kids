@@ -2,6 +2,7 @@
 import os
 import cv2
 import torch
+import pandas as pd
 import numpy as np
 import editdistance
 from korean_chars import getChars
@@ -9,7 +10,8 @@ from cvtransforms import *
 from torch.utils.data import Dataset
 
 class MyDataset(Dataset):
-    letters = getChars()
+#    letters = getChars()
+    letters = [' ', '팔', '월', '십', '육', '일', '케', '이', '시', '대', '학', '교', '강', '당', '에', '서', '국', '제', '청', '소', '년', '영', '어', '대','회','는','세','계','유','일','의','분','단','국','가',]
 
     def __init__(self, video_path, anno_path, file_list, vid_pad, txt_pad, phase):
         self.anno_path = anno_path
@@ -25,6 +27,7 @@ class MyDataset(Dataset):
             items = vid.split('/')
             self.data.append((vid, items[-2], items[-1]))              
 
+
     def __getitem__(self, idx):
         (vid, spk, name) = self.data[idx]
         vid = self._load_vid(vid)
@@ -34,11 +37,16 @@ class MyDataset(Dataset):
             vid = HorizontalFlip(vid)
           
         vid = ColorNormalize(vid)
-        
+
         vid_len = vid.shape[0]
         anno_len = anno.shape[0]
         vid = self._padding(vid, self.vid_pad)
         anno = self._padding(anno, self.txt_pad)
+
+        np.nan_to_num(vid, nan=1)
+        np.nan_to_num(anno, nan=1)
+
+        vid=vid.astype(float)
 
         return {'vid': torch.FloatTensor(vid.transpose((3, 0, 1, 2))), 
             'txt': torch.LongTensor(anno),

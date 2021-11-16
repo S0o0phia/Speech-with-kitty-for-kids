@@ -22,7 +22,7 @@ class LipNet(torch.nn.Module):
         self.FC    = nn.Linear(512, 27+1)
         self.dropout_p  = dropout_p
 
-        self.relu = nn.LeakyReLU(inplace=True)
+        self.relu = nn.ReLU(inplace=True)
         self.dropout = nn.Dropout(self.dropout_p)        
         self.dropout3d = nn.Dropout3d(self.dropout_p)  
         self._init()

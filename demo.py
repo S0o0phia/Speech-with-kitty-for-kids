@@ -60,21 +60,8 @@ def output_video(p, txt, dst):
         cv2.imwrite(os.path.join(p, file), img)
 
         
-    cmd = 'ffmpeg -y -i {}/%d.jpg -r 25 "{}"'.format(p, dst)
+    cmd = 'ffmpeg -y -i {}/%d.jpg -r 29.97 "{}"'.format(p, dst)
     os.system(cmd)
-
-'''
-        img = cv2.imread(os.path.join(p, file))
-        h, w, _ = img.shape
-        img = cv2.putText(img, line, (w // 8, 11 * h // 12), font, 0.8, (0, 0, 0), 3, cv2.LINE_AA)
-        img = cv2.putText(img, line, (w // 8, 11 * h // 12), font, 0.8, (255, 255, 255), 0, cv2.LINE_AA)  
-        h = h // 2
-        w = w // 2
-        img = cv2.resize(img, (w, h))     
-        cv2.imwrite(os.path.join(p, file), img)
-        '''
-    
-    
 
 def transformation_from_points(points1, points2):
     points1 = points1.astype(np.float64)
@@ -98,7 +85,7 @@ def transformation_from_points(points1, points2):
 def load_video(file):
     print(file)
     p = tempfile.mkdtemp()
-    cmd = 'ffmpeg -i "{}" -qscale:v 2 -r 25 "{}/%d.jpg"'.format(file, p)
+    cmd = 'ffmpeg -i "{}" -qscale:v 2 -r 29.97 "{}/%d.jpg"'.format(file, p)
     os.system(cmd)
     
     files = os.listdir(p)

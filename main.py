@@ -11,12 +11,9 @@ import torch.nn.init as init
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from tensorboardX import SummaryWriter
-
 if(__name__ == '__main__'):
     opt = __import__('options')
     os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu    
-    writer = SummaryWriter()
 
 def dataset2dataloader(dataset, num_workers=opt.num_workers, shuffle=True):
     return DataLoader(dataset,
@@ -37,7 +34,6 @@ def ctc_decode(y):
     return [MyDataset.ctc_arr2txt(y[_], start=1) for _ in range(y.size(0))]
     
 def test(model, net):
-
     with torch.no_grad():
         dataset = MyDataset(opt.video_path,
             opt.anno_path,
@@ -54,7 +50,8 @@ def test(model, net):
         cer = []
         crit = nn.CTCLoss()
         tic = time.time()
-        for (i_iter, input) in enumerate(loader):            
+        for i_iter in range(len(loader)):
+            input = next(iter(loader))          
             vid = input.get('vid').cuda()
             txt = input.get('txt').cuda()
             vid_len = input.get('vid_len').cuda()
@@ -131,9 +128,7 @@ def train(model, net):
             if(tot_iter % opt.display == 0):
                 v = 1.0*(time.time()-tic)/(tot_iter+1)
                 eta = (len(loader)-i_iter)*v/3600.0
-                
-                writer.add_scalar('train loss', loss, tot_iter)
-                writer.add_scalar('train wer', np.array(train_wer).mean(), tot_iter)              
+                          
                 print(''.join(101*'-'))                
                 print('{:<50}|{:>50}'.format('predict', 'truth'))                
                 print(''.join(101*'-'))
@@ -148,9 +143,6 @@ def train(model, net):
                 (loss, wer, cer) = test(model, net)
                 print('i_iter={},lr={},loss={},wer={},cer={}'
                     .format(tot_iter,show_lr(optimizer),loss,wer,cer))
-                writer.add_scalar('val loss', loss, tot_iter)                    
-                writer.add_scalar('wer', wer, tot_iter)
-                writer.add_scalar('cer', cer, tot_iter)
                 savename = '{}_loss_{}_wer_{}_cer_{}.pt'.format(opt.save_prefix, loss, wer, cer)
                 (path, name) = os.path.split(savename)
                 if(not os.path.exists(path)): os.makedirs(path)
@@ -181,4 +173,3 @@ if(__name__ == '__main__'):
 if(__name__ == '__main__'):
     opt = __import__('options')
     os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu    
-    writer = SummaryWriter()

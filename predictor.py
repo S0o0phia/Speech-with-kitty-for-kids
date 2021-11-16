@@ -13,7 +13,8 @@ class Predictor():
         self.set_model()
     
     def set_model(self):
-        if(hasattr(self.opt, 'weights')):
+        print(self.opt)
+        if hasattr(self.opt, 'weights'):
             pretrained_dict = torch.load(self.opt.weights)
             model_dict = self.model.state_dict()
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys() and v.size() == model_dict[k].size()}

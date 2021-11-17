@@ -1,10 +1,13 @@
 import os
 import cv2
+import videos
 import argparse
 import threading
+import sounddevice
 import tkinter as tk
 import PIL.Image, PIL.ImageTk
 from predictor import Predictor
+from scipy.io.wavfile import write
 
 count = 0
 
@@ -27,13 +30,16 @@ class App:
 
         self.timer=()
         self.vid = VideoCapture(self.video_source)
+        
+        self.audio_t = threading.Thread(target=self.audio_recording, args=())
+
         self.canvas = tk.Canvas(window, width = self.vid.width, height = self.vid.height)
         self.canvas.pack()
 
         self.btn_start=tk.Button(window, text='START', command=self.open_camera)
         self.btn_start.pack(side=tk.LEFT)
 
-        self.delay = 30
+        self.delay = 10
         self.update()
 
         self.window.mainloop()
@@ -48,18 +54,26 @@ class App:
             self.close_camera()
             timer.cancel()
 
+    def audio_recording(self):
+        fs = 16000
+        record_voice = sounddevice.rec(int(5 * fs), samplerate=fs, channels=2)
+        sounddevice.wait()
+        write("output.wav", fs, record_voice)
+        count = 0
+
     def open_camera(self):
         self.ok = True
         print("camera opened => Recording Start ...")
         self.startTimer()
+        self.audio_t.start()
 
     def close_camera(self):
         self.ok = False
-        count = 0
         print("camera closed => Recording Stopped")
         args = self.vid.args
         print(args.name[0] + '.' + args.type[0])
-        self.model.predict(args.name[0] + '.' + args.type[0])
+        video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
+        print(self.model.predict(video))
 
     def update(self):
         ret, frame = self.vid.get_frame()
@@ -104,6 +118,7 @@ class VideoCapture:
             '1080p': (1920, 1080),
             '4k': (3840, 2160),
         }
+
         res = STD_DIMENSIONS[self.args.res[0]]
         print(self.args.name, self.fourcc,res)
         self.out = cv2.VideoWriter(self.args.name[0] + '.' + self.args.type[0] , self.fourcc , 29.97, res)
@@ -135,6 +150,7 @@ class CommandLineParser:
         parser.add_argument('--name', nargs=1, default=['selfCam'], type=str)
 
         self.args = parser.parse_args()
+
 
 if __name__ == "__main__":
     opt = __import__('options')

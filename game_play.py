@@ -57,6 +57,9 @@ class App:
         self.ok = False
         count = 0
         print("camera closed => Recording Stopped")
+        args = self.vid.args
+        print(args.name[0] + '.' + args.type[0])
+        self.model.predict(args.name[0] + '.' + args.type[0])
 
     def update(self):
         ret, frame = self.vid.get_frame()
@@ -86,14 +89,14 @@ class VideoCapture:
         if not self.vid.isOpened():
             raise ValueError("Unable to open video source", video_source)
 
-        args=CommandLineParser().args
+        self.args = CommandLineParser().args
         VIDEO_TYPE = {
             'avi': cv2.VideoWriter_fourcc(*'XVID'),
             #'mp4': cv2.VideoWriter_fourcc(*'H264'),
             'mp4': cv2.VideoWriter_fourcc(*'XVID'),
         }
 
-        self.fourcc = VIDEO_TYPE[args.type[0]]
+        self.fourcc = VIDEO_TYPE[self.args.type[0]]
 
         STD_DIMENSIONS =  {
             '480p': (640, 480),
@@ -101,9 +104,9 @@ class VideoCapture:
             '1080p': (1920, 1080),
             '4k': (3840, 2160),
         }
-        res = STD_DIMENSIONS[args.res[0]]
-        print(args.name, self.fourcc,res)
-        self.out = cv2.VideoWriter(args.name[0] + '.' + args.type[0] , self.fourcc , 29.97, res)
+        res = STD_DIMENSIONS[self.args.res[0]]
+        print(self.args.name, self.fourcc,res)
+        self.out = cv2.VideoWriter(self.args.name[0] + '.' + self.args.type[0] , self.fourcc , 29.97, res)
 
         self.vid.set(3, res[0])
         self.vid.set(4, res[1])
@@ -135,6 +138,5 @@ class CommandLineParser:
 
 if __name__ == "__main__":
     opt = __import__('options')
-    print(opt.weights)
     os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu
     App(tk.Tk(), 'Video Recorder', opt)

@@ -6,6 +6,7 @@ import threading
 import sounddevice
 import tkinter as tk
 import PIL.Image, PIL.ImageTk
+import tkinter.font as tkFont
 from predictor import Predictor
 from scipy.io.wavfile import write
 
@@ -13,35 +14,41 @@ count = 0
 
 class App:
     def __init__(self, window, window_title, opts, video_source=0):
+        self.ok = False
+        self.delay = 10
         self.window = window
-        self.window.title(window_title)
         self.video_source = video_source
-        self.ok=False
+        self.window.title(window_title)
 
-        self.model = Predictor(opts)
-
-        ear = cv2.imread('assets/ear.png')
+        ear = cv2.imread('assets/ear.bmp', cv2.IMREAD_COLOR)
         ear = cv2.resize(ear, (300, 300), interpolation = cv2.INTER_CUBIC)
         mask = cv2.cvtColor(ear, cv2.COLOR_BGR2GRAY)
-        mask[mask[:] == 255] = 0
-        mask[mask[:] > 50] = 255
+        mask[mask[:] == 255] = -1
+        mask[mask[:] >= 0] = 255
+        mask[mask[:] == -1] = 0
         self.mask_inv = cv2.bitwise_not(mask)
         self.ear = cv2.bitwise_and(ear, ear, mask=mask)
 
         self.timer=()
         self.vid = VideoCapture(self.video_source)
-        
         self.audio_t = threading.Thread(target=self.audio_recording, args=())
 
+        self.bg = tk.PhotoImage(file=r'assets\next3.png')
         self.canvas = tk.Canvas(window, width = self.vid.width, height = self.vid.height)
-        self.canvas.pack()
+        self.canvas.pack(fill = "both", expand = True)
+#        self.canvas.create_image(0, 0, image = self.bg, anchor = "nw")
+#        self.canvas.create_window(0, 0, anchor = "nw", window = self.bg)
 
         self.btn_start=tk.Button(window, text='START', command=self.open_camera)
-        self.btn_start.pack(side=tk.LEFT)
+        self.btn_start.pack(side = tk.LEFT)
 
-        self.delay = 10
+        self.model = Predictor(opts)
+        
+#        fontStyle=tkFont.Font(family="카페24 써라운드", size=20)
+#        submit = tk.Button(window, width=6, height=1, text = "결과확인", background="#FFE8FF", font = fontStyle, command=next4)
+#        window.create_window(1125, 650, anchor="nw", window=submit)
+
         self.update()
-
         self.window.mainloop()
 
     def startTimer(self):
@@ -87,7 +94,7 @@ class App:
             roi = frame_show[fh : fh + h, 0 : w]
             back = cv2.bitwise_and(roi, roi, mask=self.mask_inv)
             dst = cv2.add(self.ear, back)
-            frame_show[fh : fh + h, 0 : w] = dst  
+            frame_show[fh : fh + h, 0 : w] = dst
 
         if ret:
             frame_show = cv2.resize(frame_show, (440, 280))
@@ -125,7 +132,7 @@ class VideoCapture:
 
         self.vid.set(3, res[0])
         self.vid.set(4, res[1])
-        self.width,self.height=res
+        self.width, self.height=res
 
     def get_frame(self):
         if self.vid.isOpened():

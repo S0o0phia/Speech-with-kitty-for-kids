@@ -4,18 +4,23 @@ from dataset import MyDataset
 import torch
 import torch.nn as nn
 
+device = torch.device("cpu")
+
 class Predictor():
     def __init__(self, opt):
         self.opt = opt
         self.model = LipNet()
-        self.model = self.model.cuda()
-        self.net = nn.DataParallel(self.model).cuda()
+        self.model = self.model.to(device)
+        self.net = nn.DataParallel(self.model).to(device)
+#        self.model = self.model.cuda()
+#        self.net = nn.DataParallel(self.model).cuda()
         self.set_model()
     
     def set_model(self):
         print(self.opt)
         if hasattr(self.opt, 'weights'):
-            pretrained_dict = torch.load(self.opt.weights)
+            pretrained_dict = self.model.load_state_dict(torch.load(self.opt.weights, map_location=device))
+            #pretrained_dict = torch.load(self.opt.weights)
             model_dict = self.model.state_dict()
             pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict.keys() and v.size() == model_dict[k].size()}
             missed_params = [k for k, v in model_dict.items() if not k in pretrained_dict.keys()]
@@ -37,6 +42,7 @@ class Predictor():
         return result
 
     def predict(self, video):
-        y = self.model(video[None,...].cuda())
+        y = self.model(video[None,...].to('cpu'))
+#        y = self.model(video[None,...].cuda())
         txt = self.ctc_decode(y[0])
         return(txt[-1])

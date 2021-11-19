@@ -17,4 +17,4 @@ video_path = './GRID/lip/'
 base_lr = 2e-5      # 학습률
 
 #사전 훈련된 가중치의 위치입니다. 모델은 훈련 또는 테스트 전에 이 가중치를 로드합니다. 이 매개변수가 누락되면 모델이 처음부터 학습됩니다.
-weights = './weights/swk_trained/_loss_0.1432182490825653_wer_0.0_cer_0.0.pt'
+#weights = './weights/swk_trained/_loss_3.6437008380889893_wer_1.0_cer_1.0.pt'

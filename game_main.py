@@ -41,14 +41,7 @@ def next2():
     my_canvas.create_window(0, 0, anchor="nw", window=bg2)
 
 def next3():
-    my_canvas.delete("all")
-    bg3 = PhotoImage(file = './assets/next3.png')
-    my_canvas.create_image(0,0, image = bg3, anchor = "nw")
-    fontStyle=tkFont.Font(family="카페24 써라운드", size=20)
-    
-    button8 = Button(root, width=6, height=1, text = "결과확인", background="#FFE8FF", font = fontStyle, command=next4)
-    my_canvas.create_window(1125, 650, anchor="nw", window=button8)
-    my_canvas.create_window(0, 0, anchor="nw", window=bg3)
+    game_play.main()
 
 def next4():
     my_canvas.delete("all")

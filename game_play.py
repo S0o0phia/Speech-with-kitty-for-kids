@@ -1,6 +1,8 @@
 import os
 import cv2
+import json
 import videos
+import requests
 import argparse
 import threading
 import sounddevice
@@ -38,6 +40,14 @@ class App:
         self.vid = VideoCapture(self.video_source)
         self.audio_t = threading.Thread(target=self.audio_recording, args=())
 
+        self.stt_url = "https://kakaoi-newtone-openapi.kakao.com/v1/recognize"
+        self.rest_api_key = '989e297c8f98f0f1b207ff218bc42740'
+        self.stt_headers = {
+            "Content-Type": "application/octet-stream",
+            "X-DSS-Service": "DICTATION",
+            "Authorization": "KakaoAK " + self.rest_api_key,
+        }
+
         self.bg = tk.PhotoImage(file=r'C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\assets\next3.png')
         self.canvas = tk.Canvas(window, width = self.vid.width, height = self.vid.height)
         self.canvas.pack(fill = "both", expand = True)
@@ -58,6 +68,21 @@ class App:
         self.update()
         self.window.mainloop()
 
+    def stt(self):
+        with open('output.wav', 'rb') as fp:
+            audio = fp.read()
+
+        try:
+            res = requests.post(self.stt_url, headers=self.headers, data=audio)
+            #print(res.text)
+            result_json_string = res.text[res.text.index('{"type":"finalResult"'):res.text.rindex('}') + 1]
+            result = json.loads(result_json_string)
+            value = result['value']
+            print(result['value'])
+        except:
+            print("XP")
+            
+        
     def startTimer(self):
         global count
         count += 1
@@ -85,9 +110,12 @@ class App:
         self.ok = False
         print("camera closed => Recording Stopped")
         args = self.vid.args
-        print(args.name[0] + '.' + args.type[0])
+#        print(args.name[0] + '.' + args.type[0])
         video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
-        print(self.model.predict(video))
+        lip = self.model.predict(video)
+        sound = self.stt()
+        print(lip, sound)
+
 
     def suffle_problem(self):
         pass

@@ -1,8 +1,9 @@
+import game_play
 from tkinter import *
 import tkinter.font as tkFont
 from PIL import ImageTk, Image
 
-def init():
+def main():
     global my_canvas, bg
     bg = PhotoImage(file = './assets/main_merged.png')
 
@@ -22,19 +23,21 @@ def next2():
     
     fontStyle=tkFont.Font(family="카페24 써라운드", size=20)
     
-    button2 = Button(root, width=5, height=1, text = "가-하", background="#FFE8FF", font = fontStyle, command=next3)
-    button3 = Button(root, width=5, height=1, text = "고-호", background="#FFE8FF", font = fontStyle)
-    button4 = Button(root, width=5, height=1, text = "그-흐", background="#FFE8FF", font = fontStyle)
-    button5 = Button(root, width=5, height=1, text = "거-허", background="#FFE8FF", font = fontStyle)
-    button6 = Button(root, width=5, height=1, text = "구-후", background="#FFE8FF", font = fontStyle)
-    button7 = Button(root, width=5, height=1, text = "기-히", background="#FFE8FF", font = fontStyle)
+    button_set = []
 
-    my_canvas.create_window(350, 220, anchor="nw", window=button2)
-    my_canvas.create_window(350, 290, anchor="nw", window=button3)
-    my_canvas.create_window(350, 360, anchor="nw", window=button4)
-    my_canvas.create_window(350, 430, anchor="nw", window=button5)
-    my_canvas.create_window(350, 500, anchor="nw", window=button6)
-    my_canvas.create_window(350, 570, anchor="nw", window=button7)
+    button_set.append(Button(root, width=5, height=1, text = "가-하", background="#FFE8FF", font = fontStyle, command=next3))
+    button_set.append(Button(root, width=5, height=1, text = "고-호", background="#FFE8FF", font = fontStyle))
+    button_set.append(Button(root, width=5, height=1, text = "그-흐", background="#FFE8FF", font = fontStyle))
+    button_set.append(Button(root, width=5, height=1, text = "거-허", background="#FFE8FF", font = fontStyle))
+    button_set.append(Button(root, width=5, height=1, text = "구-후", background="#FFE8FF", font = fontStyle))
+    button_set.append(Button(root, width=5, height=1, text = "기-히", background="#FFE8FF", font = fontStyle))
+
+    place_h = 250
+
+    for button in button_set:
+        my_canvas.create_window(350, place_h, anchor="nw", window=button)
+        place_h += 70
+
     my_canvas.create_window(0, 0, anchor="nw", window=bg2)
 
 def next3():
@@ -47,25 +50,24 @@ def next3():
     my_canvas.create_window(1125, 650, anchor="nw", window=button8)
     my_canvas.create_window(0, 0, anchor="nw", window=bg3)
 
-
 def next4():
     my_canvas.delete("all")
     bg4 = PhotoImage(file = './assets/next4.png')
     my_canvas.create_image(0,0, image = bg4, anchor = "nw")
-
     my_canvas.create_window(0, 0, anchor="nw", window=bg4)
 
+    btt = Image.open('./assets/button.png').resize((100, 50), Image.ANTIALIAS)
+    btt = ImageTk.PhotoImage(btt)
 
-def main():
+def init():
     global root
     root = Tk()
     root.call('wm', 'iconphoto', root._w, PhotoImage(file='./assets/icon.png'))
     root.title("냥냥이와 말해요")
     root.geometry("1280x720")
     root.resizable(False, False)
-    init()
-
+    main()
 
 if __name__ == '__main__':
-    main()
+    init()
     root.mainloop()

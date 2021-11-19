@@ -13,7 +13,8 @@ from torch.utils.data import DataLoader
 
 if(__name__ == '__main__'):
     opt = __import__('options')
-    os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu    
+#    os.environ['CUDA_VISIBLE_DEVICES'] = "0" if torch.cuda.is_available() else ""
+    device = torch.device("cpu")
 
 def dataset2dataloader(dataset, num_workers=opt.num_workers, shuffle=True):
     return DataLoader(dataset,
@@ -52,10 +53,15 @@ def test(model, net):
         tic = time.time()
         for i_iter in range(len(loader)):
             input = next(iter(loader))          
-            vid = input.get('vid').cuda()
-            txt = input.get('txt').cuda()
-            vid_len = input.get('vid_len').cuda()
-            txt_len = input.get('txt_len').cuda()
+            vid = input.get('vid').to(device)
+            txt = input.get('txt').to(device)
+            vid_len = input.get('vid_len').to(device)
+            txt_len = input.get('txt_len').to(device)
+
+            #vid = input.get('vid').cuda()
+            #txt = input.get('txt').cuda()
+            #vid_len = input.get('vid_len').cuda()
+            #txt_len = input.get('txt_len').cuda()
 
             y = net(vid)
             
@@ -106,10 +112,15 @@ def train(model, net):
             input = next(iter(loader))
 #        for (i_iter, input) in enumerate(loader.dataset):
             model.train()
-            vid = input.get('vid').cuda()
-            txt = input.get('txt').cuda()
-            vid_len = input.get('vid_len')
-            txt_len = input.get('txt_len')
+            
+            vid = input.get('vid').to(device)
+            txt = input.get('txt').to(device)
+            vid_len = input.get('vid_len').to(device)
+            txt_len = input.get('txt_len').to(device)
+#            vid = input.get('vid').cuda()
+#            txt = input.get('txt').cuda()
+#            vid_len = input.get('vid_len')
+#            txt_len = input.get('txt_len')
             
 #            print(vid.size())
             
@@ -153,8 +164,10 @@ def train(model, net):
 if(__name__ == '__main__'):
     print("Loading options...")
     model = LipNet()
-    model = model.cuda()
-    net = nn.DataParallel(model).cuda()
+#    model = model.cuda()
+    model = model.to(device)
+    net = nn.DataParallel(model).to(device)
+#    net = nn.DataParallel(model).cuda()
 
     if(hasattr(opt, 'weights')):
         pretrained_dict = torch.load(opt.weights)
@@ -169,7 +182,3 @@ if(__name__ == '__main__'):
     torch.manual_seed(opt.random_seed)
     torch.cuda.manual_seed_all(opt.random_seed)
     train(model, net)
-        
-if(__name__ == '__main__'):
-    opt = __import__('options')
-    os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu    

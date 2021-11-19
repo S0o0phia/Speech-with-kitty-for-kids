@@ -52,7 +52,6 @@ def get_position(size, padding=0.25):
     return np.array(list(zip(x, y)))
 
 def load_video(file):
-    print(file)
     p = tempfile.mkdtemp()
     cmd = 'ffmpeg -i "{}" -qscale:v 2 -r 29.97 "{}/%d.jpg"'.format(file, p)
     os.system(cmd)
@@ -69,6 +68,7 @@ def load_video(file):
     
     front256 = get_position(256)
     video = []
+    
     for point, scene in zip(points, array):
         if(point is not None):
             shape = np.array(point[0])

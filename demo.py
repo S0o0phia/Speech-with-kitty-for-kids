@@ -135,7 +135,6 @@ if(__name__ == '__main__'):
     opt = __import__('options')
     os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu    
     
-    
     model = LipNet()
     model = model.cuda()
     net = nn.DataParallel(model).cuda()

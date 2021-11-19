@@ -5,19 +5,25 @@ import argparse
 import threading
 import sounddevice
 import tkinter as tk
+import tkinter.font as tkFont
 import PIL.Image, PIL.ImageTk
 from predictor import Predictor
 from scipy.io.wavfile import write
 
 count = 0
+answer = [] # 정답
+non_answer = [] # 오답
 
 class App:
     def __init__(self, window, window_title, opts, video_source=0):
         self.ok = False
         self.delay = 10
         self.window = window
-        self.video_source = video_source
+        self.suffle_problem()
+        self.model = Predictor(opts)
+        self.video_source = video_source        
         self.window.title(window_title)
+        fontStyle=tkFont.Font(family="카페24 써라운드", size=10)        
 
         ear = cv2.imread('assets/ear.png', cv2.IMREAD_COLOR)
         ear = cv2.resize(ear, (300, 300), interpolation = cv2.INTER_CUBIC)
@@ -32,22 +38,22 @@ class App:
         self.vid = VideoCapture(self.video_source)
         self.audio_t = threading.Thread(target=self.audio_recording, args=())
 
-        self.bg = tk.PhotoImage(r'D:\capstone\2021-1\project\Speech-with-kitty\assets\next3.png')
+        self.bg = tk.PhotoImage(file=r'C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\assets\next3.png')
         self.canvas = tk.Canvas(window, width = self.vid.width, height = self.vid.height)
         self.canvas.pack(fill = "both", expand = True)
 
         self.canvas.create_image(0, 0, image = self.bg, anchor = "nw")
-        self.canvas.create_window(0, 0, window = self.bg, anchor = "nw")
+#        self.canvas.create_window(0, 0, window = self.bg, anchor = "nw")
         self.canvas.update()
 
-        self.btn_start=tk.Button(window, text='START', command=self.open_camera)
-        self.btn_start.pack(side = tk.LEFT)
-
-        self.model = Predictor(opts)
+        btn_start=tk.Button(window, text='들어봐!', background="#FFE8FF", font = fontStyle, command=self.open_camera)
+        btn_start.pack(side = tk.LEFT)
         
-#        fontStyle=tkFont.Font(family="카페24 써라운드", size=20)
-#        submit = tk.Button(window, width=6, height=1, text = "결과확인", background="#FFE8FF", font = fontStyle, command=next4)
-#        window.create_window(1125, 650, anchor="nw", window=submit)
+        btn_next=tk.Button(window, text='다른 문제', background="#FFE8FF", font = fontStyle, command=self.suffle_problem)
+        btn_next.pack(side = tk.LEFT)
+                
+        btn_submit = tk.Button(window, text = "결과확인", background="#FFE8FF", font = fontStyle, command=None)
+        btn_submit.pack(side = tk.RIGHT)
 
         self.update()
         self.window.mainloop()
@@ -83,6 +89,9 @@ class App:
         video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
         print(self.model.predict(video))
 
+    def suffle_problem(self):
+        pass
+
     def update(self):
         ret, frame = self.vid.get_frame()
         frame_show = frame
@@ -98,9 +107,9 @@ class App:
             frame_show[fh : fh + h, 0 : w] = dst
 
         if ret:
-            frame_show = cv2.resize(frame_show, (440, 280))
+            frame_show = cv2.resize(frame_show, (340, 180))
             self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame_show))
-            self.canvas.create_image(800, 450, image = self.photo, anchor = tk.NW)
+            self.canvas.create_image(850, 500, image = self.photo, anchor = tk.NW)
 
         self.window.after(self.delay, self.update)
 
@@ -159,8 +168,10 @@ class CommandLineParser:
 
         self.args = parser.parse_args()
 
-
-if __name__ == "__main__":
+def main():
     opt = __import__('options')
     os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu
-    App(tk.Tk(), 'Video Recorder', opt)
+    App(tk.Tk(), '냥냥이랑 놀자!', opt)
+
+if __name__ == "__main__":
+    main()

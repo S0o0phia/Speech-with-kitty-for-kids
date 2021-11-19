@@ -20,14 +20,9 @@ class App:
 
         self.model = Predictor(opts)
 
-        ear = cv2.imread('assets/ear.png')
-        ear = cv2.resize(ear, (300, 300), interpolation = cv2.INTER_CUBIC)
-        mask = cv2.cvtColor(ear, cv2.COLOR_BGR2GRAY)
-        mask[mask[:] == 255] = 0
-        mask[mask[:] > 50] = 255
-        self.mask_inv = cv2.bitwise_not(mask)
-        self.ear = cv2.bitwise_and(ear, ear, mask=mask)
-
+        self.ear = cv2.imread('assets/ear.png')
+        self.ear = cv2.resize(self.ear, (300, 300), interpolation = cv2.INTER_CUBIC)
+        
         self.timer=()
         self.vid = VideoCapture(self.video_source)
         
@@ -85,9 +80,7 @@ class App:
             h, w, c = self.ear.shape
             fh = 720 - h
             roi = frame_show[fh : fh + h, 0 : w]
-            back = cv2.bitwise_and(roi, roi, mask=self.mask_inv)
-            dst = cv2.add(self.ear, back)
-            frame_show[fh : fh + h, 0 : w] = dst  
+            frame_show[fh : fh + h, 0 : w] = self.ear  
 
         if ret:
             frame_show = cv2.resize(frame_show, (440, 280))

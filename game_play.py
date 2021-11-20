@@ -19,7 +19,7 @@ non_answer = [] # 오답
 class App:
     def __init__(self, window, window_title, opts, video_source=0):
         self.ok = False
-        self.delay = 10
+        self.delay = 1
         self.window = window
         self.suffle_problem()
         self.model = Predictor(opts)
@@ -74,6 +74,7 @@ class App:
 
         try:
             res = requests.post(self.stt_url, headers=self.headers, data=audio)
+            print(res)
             #print(res.text)
             result_json_string = res.text[res.text.index('{"type":"finalResult"'):res.text.rindex('}') + 1]
             result = json.loads(result_json_string)
@@ -109,13 +110,13 @@ class App:
     def close_camera(self):
         self.ok = False
         print("camera closed => Recording Stopped")
+        self.audio_t.join()
         args = self.vid.args
 #        print(args.name[0] + '.' + args.type[0])
-        video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
-        lip = self.model.predict(video)
+#        video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
+#        lip = self.model.predict(video)
         sound = self.stt()
-        print(lip, sound)
-
+#        print(lip, sound)
 
     def suffle_problem(self):
         pass
@@ -190,7 +191,7 @@ class VideoCapture:
 class CommandLineParser:    
     def __init__(self):
         parser=argparse.ArgumentParser()
-        parser.add_argument('--type', nargs=1, default=['avi'], type=str)
+        parser.add_argument('--type', nargs=1, default=['mp4'], type=str)
         parser.add_argument('--res', nargs=1, default=['720p'], type=str)
         parser.add_argument('--name', nargs=1, default=['selfCam'], type=str)
 

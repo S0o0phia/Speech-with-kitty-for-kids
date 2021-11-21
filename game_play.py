@@ -1,4 +1,6 @@
 import os
+from tkinter.constants import ANCHOR
+from typing import Tuple
 import cv2
 import json
 import videos
@@ -19,9 +21,9 @@ non_answer = [] # 오답
 class App:
     def __init__(self, window, window_title, opts, video_source=0):
         self.ok = False
+        self.end = False
         self.delay = 1
         self.window = window
-        self.suffle_problem()
         self.model = Predictor(opts)
         self.video_source = video_source        
         self.window.title(window_title)
@@ -48,27 +50,36 @@ class App:
             "Authorization": "KakaoAK " + self.rest_api_key,
         }
 
-        self.bg = tk.PhotoImage(file=r'C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\assets\next3.png')
         self.canvas = tk.Canvas(window, width = self.vid.width, height = self.vid.height)
         self.canvas.pack(fill = "both", expand = True)
 
+        self.bg = tk.PhotoImage(file=r'C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\assets\next3.png')
         self.canvas.create_image(0, 0, image = self.bg, anchor = "nw")
-#        self.canvas.create_window(0, 0, window = self.bg, anchor = "nw")
         self.canvas.update()
+
+        self.img_list = []
+        self.img_list.append(tk.PhotoImage(file=r"C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\photos\가\size\가방.png"))
+        self.img_list.append(tk.PhotoImage(file=r"C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\photos\가\size\가위.png"))
+        self.img_list.append(tk.PhotoImage(file=r"C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\photos\가\size\가지.png"))
+
+        self.count_quiz = 0
+        self.len_quiz = len(self.img_list)
+        self.suffle_quiz()
+        #self.canvas.create_image(300, 310, image=ga_img1)
+        #self.canvas.create_image(650, 310, image=ga_img2)
+        #self.canvas.create_image(1000, 310, image=ga_img3)
 
         btn_start=tk.Button(window, text='들어봐!', background="#FFE8FF", font = fontStyle, command=self.open_camera)
         btn_start.pack(side = tk.LEFT)
-        
-        btn_next=tk.Button(window, text='다른 문제', background="#FFE8FF", font = fontStyle, command=self.suffle_problem)
+        btn_next=tk.Button(window, text='다른 문제', background="#FFE8FF", font = fontStyle, command=self.suffle_quiz)
         btn_next.pack(side = tk.LEFT)
-                
-        btn_submit = tk.Button(window, text = "결과확인", background="#FFE8FF", font = fontStyle, command=None)
+        btn_submit = tk.Button(window, text = "결과확인", background="#FFE8FF", font = fontStyle, command=self.show_result)
         btn_submit.pack(side = tk.RIGHT)
-
         self.update()
+
         self.window.mainloop()
 
-    def stt(self):
+    def stt(self, value):
         with open('output.wav', 'rb') as fp:
             audio = fp.read()
 
@@ -79,10 +90,11 @@ class App:
             result_json_string = res.text[res.text.index('{"type":"finalResult"'):res.text.rindex('}') + 1]
             result = json.loads(result_json_string)
             value = result['value']
-            print(result['value'])
+            print(value)
         except:
             print("XP")
-            
+        
+        return value
         
     def startTimer(self):
         global count
@@ -118,8 +130,24 @@ class App:
         sound = self.stt()
 #        print(lip, sound)
 
-    def suffle_problem(self):
-        pass
+    def suffle_quiz(self):
+        print("Suffle!")
+        if self.count_quiz == self.len_quiz:
+            self.show_result()
+        else:
+            self.canvas.delete("all")
+            self.canvas.create_image(0, 0, image = self.bg, anchor = "nw")
+            self.canvas.create_image(650, 310, image=self.img_list[self.count_quiz])
+            self.canvas.update()
+            self.count_quiz += 1
+
+    def show_result(self):
+        self.end = True
+        self.canvas.delete("all")
+
+        bg_result = tk.PhotoImage(file = r'C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\assets\next4.png')
+        self.canvas.create_image(0, 0, image = bg_result, anchor = "nw")
+        self.canvas.update()
 
     def update(self):
         ret, frame = self.vid.get_frame()
@@ -135,13 +163,12 @@ class App:
             dst = cv2.add(self.ear, back)
             frame_show[fh : fh + h, 0 : w] = dst
 
-        if ret:
+        if ret and not self.end:
             frame_show = cv2.resize(frame_show, (340, 180))
             self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame_show))
             self.canvas.create_image(850, 500, image = self.photo, anchor = tk.NW)
 
         self.window.after(self.delay, self.update)
-
 
 class VideoCapture:
     def __init__(self, video_source=0):

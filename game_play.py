@@ -1,7 +1,7 @@
 import os
 from tkinter.constants import ANCHOR
-from typing import Tuple
 import cv2
+import time
 import json
 import videos
 import requests
@@ -23,8 +23,12 @@ class App:
         self.ok = False
         self.end = False
         self.delay = 1
-        self.window = window
+        self.answer = []
+        self.not_answer = []
+
         self.model = Predictor(opts)
+
+        self.window = window
         self.video_source = video_source        
         self.window.title(window_title)
         fontStyle=tkFont.Font(family="카페24 써라운드", size=10)        
@@ -40,27 +44,28 @@ class App:
 
         self.timer=()
         self.vid = VideoCapture(self.video_source)
-        self.audio_t = threading.Thread(target=self.audio_recording, args=())
+        self.audio_t = None
 
-        self.stt_url = "https://kakaoi-newtone-openapi.kakao.com/v1/recognize"
-        self.rest_api_key = '989e297c8f98f0f1b207ff218bc42740'
-        self.stt_headers = {
+        rest_api_id = "ndx5kpranc"
+        rest_api_pw = "aXGsfnDJOrp61883MiyBcpY1knb3E4tqPqB9G3mQ" 
+        self.headers = {
             "Content-Type": "application/octet-stream",
-            "X-DSS-Service": "DICTATION",
-            "Authorization": "KakaoAK " + self.rest_api_key,
+            "X-NCP-APIGW-API-KEY-ID": rest_api_id,
+            "X-NCP-APIGW-API-KEY": rest_api_pw,
         }
+        self.stt_url = "https://naveropenapi.apigw.ntruss.com/recog/v1/stt?lang=Kor"
 
         self.canvas = tk.Canvas(window, width = self.vid.width, height = self.vid.height)
         self.canvas.pack(fill = "both", expand = True)
 
-        self.bg = tk.PhotoImage(file=r'C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\assets\next3.png')
-        self.canvas.create_image(0, 0, image = self.bg, anchor = "nw")
+        self.bg_image = tk.PhotoImage(file=r'D:\capstone\2021-1\project\Speech-with-kitty\assets\next3.png')
+#        self.canvas.create_image(0, 0, image = self.bg, anchor = "nw")
         self.canvas.update()
 
         self.img_list = []
-        self.img_list.append(tk.PhotoImage(file=r"C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\photos\가\size\가방.png"))
-        self.img_list.append(tk.PhotoImage(file=r"C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\photos\가\size\가위.png"))
-        self.img_list.append(tk.PhotoImage(file=r"C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\photos\가\size\가지.png"))
+        self.img_list.append(tk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\photos\가\size\가방.png"))
+        self.img_list.append(tk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\photos\가\size\가위.png"))
+        self.img_list.append(tk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\photos\가\가지.png"))
 
         self.count_quiz = 0
         self.len_quiz = len(self.img_list)
@@ -69,29 +74,36 @@ class App:
         #self.canvas.create_image(650, 310, image=ga_img2)
         #self.canvas.create_image(1000, 310, image=ga_img3)
 
+        self.button_list = []
         btn_start=tk.Button(window, text='들어봐!', background="#FFE8FF", font = fontStyle, command=self.open_camera)
         btn_start.pack(side = tk.LEFT)
         btn_next=tk.Button(window, text='다른 문제', background="#FFE8FF", font = fontStyle, command=self.suffle_quiz)
         btn_next.pack(side = tk.LEFT)
         btn_submit = tk.Button(window, text = "결과확인", background="#FFE8FF", font = fontStyle, command=self.show_result)
         btn_submit.pack(side = tk.RIGHT)
+
+        self.button_list.append(btn_start)
+        self.button_list.append(btn_next)
+        self.button_list.append(btn_submit)
+
         self.update()
 
         self.window.mainloop()
 
     def stt(self, value):
-        with open('output.wav', 'rb') as fp:
+        with open('./output.wav', 'rb') as fp:
             audio = fp.read()
 
         try:
             res = requests.post(self.stt_url, headers=self.headers, data=audio)
-            print(res)
-            #print(res.text)
-            result_json_string = res.text[res.text.index('{"type":"finalResult"'):res.text.rindex('}') + 1]
-            result = json.loads(result_json_string)
-            value = result['value']
-            print(value)
-        except:
+            rescode = res.status_code
+            if(rescode == 200):
+                res_json = json.loads(res.text)
+                value = res_json['test']
+
+            else:
+                print("Error : " + res.text)
+        except Exception as e:
             print("XP")
         
         return value
@@ -103,32 +115,35 @@ class App:
         timer.start()
 
         if count == 5:
-            self.close_camera()
             timer.cancel()
+            self.close_camera()
 
     def audio_recording(self):
         fs = 16000
         record_voice = sounddevice.rec(int(5 * fs), samplerate=fs, channels=2)
         sounddevice.wait()
         write("output.wav", fs, record_voice)
+        global count
         count = 0
 
     def open_camera(self):
         self.ok = True
         print("camera opened => Recording Start ...")
         self.startTimer()
+        self.audio_t = threading.Thread(target=self.audio_recording, args=())
         self.audio_t.start()
 
     def close_camera(self):
         self.ok = False
         print("camera closed => Recording Stopped")
-        self.audio_t.join()
         args = self.vid.args
-#        print(args.name[0] + '.' + args.type[0])
-#        video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
-#        lip = self.model.predict(video)
-        sound = self.stt()
-#        print(lip, sound)
+        video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
+        lip = self.model.predict(video)
+        self.vid.out.release()
+        os.remove('selfCam.avi')
+        self.vid.out = cv2.VideoWriter(args.name[0] + '.' + args.type[0] , self.vid.fourcc , 29.97, self.vid.res)
+        sound = self.stt("example")
+        print(lip, sound)
 
     def suffle_quiz(self):
         print("Suffle!")
@@ -136,18 +151,16 @@ class App:
             self.show_result()
         else:
             self.canvas.delete("all")
-            self.canvas.create_image(0, 0, image = self.bg, anchor = "nw")
+            self.canvas.create_image(0, 0, image = self.bg_image, anchor = "nw")
             self.canvas.create_image(650, 310, image=self.img_list[self.count_quiz])
-            self.canvas.update()
             self.count_quiz += 1
 
     def show_result(self):
         self.end = True
-        self.canvas.delete("all")
+#        self.canvas.delete("all")
 
-        bg_result = tk.PhotoImage(file = r'C:\Users\chw06\OneDrive\capstone\2021-1\project\Speech-with-kitty-for-kids\assets\next4.png')
-        self.canvas.create_image(0, 0, image = bg_result, anchor = "nw")
-        self.canvas.update()
+        self.bg_image = tk.PhotoImage(file = r'D:\capstone\2021-1\project\Speech-with-kitty\assets\next4.png')
+        self.canvas.create_image(0, 0, image = self.bg_image, anchor = "nw")
 
     def update(self):
         ret, frame = self.vid.get_frame()
@@ -192,13 +205,13 @@ class VideoCapture:
             '4k': (3840, 2160),
         }
 
-        res = STD_DIMENSIONS[self.args.res[0]]
-        print(self.args.name, self.fourcc,res)
-        self.out = cv2.VideoWriter(self.args.name[0] + '.' + self.args.type[0] , self.fourcc , 29.97, res)
+        self.res = STD_DIMENSIONS[self.args.res[0]]
+        print(self.args.name, self.fourcc, self.res)
+        self.out = cv2.VideoWriter(self.args.name[0] + '.' + self.args.type[0] , self.fourcc , 29.97, self.res)
 
-        self.vid.set(3, res[0])
-        self.vid.set(4, res[1])
-        self.width, self.height=res
+        self.vid.set(3, self.res[0])
+        self.vid.set(4, self.res[1])
+        self.width, self.height=self.res
 
     def get_frame(self):
         if self.vid.isOpened():
@@ -206,7 +219,7 @@ class VideoCapture:
             if ret: return (ret, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             else:   return (ret, None)
         else:
-            return (ret, None)
+            return (None, None)
 
     def __del__(self):
         if self.vid.isOpened():
@@ -218,7 +231,7 @@ class VideoCapture:
 class CommandLineParser:    
     def __init__(self):
         parser=argparse.ArgumentParser()
-        parser.add_argument('--type', nargs=1, default=['mp4'], type=str)
+        parser.add_argument('--type', nargs=1, default=['avi'], type=str)
         parser.add_argument('--res', nargs=1, default=['720p'], type=str)
         parser.add_argument('--name', nargs=1, default=['selfCam'], type=str)
 

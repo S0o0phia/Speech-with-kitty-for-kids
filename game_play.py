@@ -24,14 +24,14 @@ class App:
         self.end = False
         self.delay = 1
         self.answer = []
-        self.not_answer = []
+        self.no_answer = []
 
         self.model = Predictor(opts)
 
         self.window = window
         self.video_source = video_source        
         self.window.title(window_title)
-        fontStyle=tkFont.Font(family="카페24 써라운드", size=10)        
+        self.fontStyle=tkFont.Font(family="카페24 써라운드", size=10)        
 
         ear = cv2.imread('assets/ear.png', cv2.IMREAD_COLOR)
         ear = cv2.resize(ear, (300, 300), interpolation = cv2.INTER_CUBIC)
@@ -62,6 +62,7 @@ class App:
 #        self.canvas.create_image(0, 0, image = self.bg, anchor = "nw")
         self.canvas.update()
 
+        self.a_list = ['가방', '가위', '가지']
         self.img_list = []
         self.img_list.append(tk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\photos\가\size\가방.png"))
         self.img_list.append(tk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\photos\가\size\가위.png"))
@@ -75,13 +76,16 @@ class App:
         #self.canvas.create_image(1000, 310, image=ga_img3)
 
         self.button_list = []
-        btn_start=tk.Button(window, text='들어봐!', background="#FFE8FF", font = fontStyle, command=self.open_camera)
+        btn_start=tk.Button(window, text='들어봐!', background="#FFE8FF", font = self.fontStyle, command=self.open_camera)
         btn_start.pack(side = tk.LEFT)
-        btn_next=tk.Button(window, text='다른 문제', background="#FFE8FF", font = fontStyle, command=self.suffle_quiz)
+        btn_next=tk.Button(window, text='다른 문제', background="#FFE8FF", font = self.fontStyle, command=self.suffle_quiz)
         btn_next.pack(side = tk.LEFT)
-        btn_submit = tk.Button(window, text = "결과확인", background="#FFE8FF", font = fontStyle, command=self.show_result)
+        btn_submit = tk.Button(window, text = "결과확인", background="#FFE8FF", font = self.fontStyle, command=self.show_result)
         btn_submit.pack(side = tk.RIGHT)
 
+        self.cat_says = None
+        self.lip_image = None
+        self.tmp_lip_image = None
         self.button_list.append(btn_start)
         self.button_list.append(btn_next)
         self.button_list.append(btn_submit)
@@ -99,12 +103,12 @@ class App:
             rescode = res.status_code
             if(rescode == 200):
                 res_json = json.loads(res.text)
-                value = res_json['test']
+                value = res_json['text']
 
             else:
                 print("Error : " + res.text)
         except Exception as e:
-            print("XP")
+            print(e)
         
         return value
         
@@ -127,6 +131,13 @@ class App:
         count = 0
 
     def open_camera(self):
+        if self.a_list[self.count_quiz - 1] in self.answer:
+            self.answer.remove(self.a_list[self.count_quiz - 1])
+        elif self.a_list[self.count_quiz - 1] in self.no_answer:
+            self.no_answer.remove(self.a_list[self.count_quiz - 1])
+
+        self.canvas.delete(self.lip_image)
+
         self.ok = True
         print("camera opened => Recording Start ...")
         self.startTimer()
@@ -134,33 +145,64 @@ class App:
         self.audio_t.start()
 
     def close_camera(self):
+        self.audio_t.join()
         self.ok = False
         print("camera closed => Recording Stopped")
         args = self.vid.args
-        video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
-        lip = self.model.predict(video)
+#        video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
+#        lip = self.model.predict(video)
+        lip = self.a_list[self.count_quiz - 1]
         self.vid.out.release()
         os.remove('selfCam.avi')
         self.vid.out = cv2.VideoWriter(args.name[0] + '.' + args.type[0] , self.vid.fourcc , 29.97, self.vid.res)
-        sound = self.stt("example")
-        print(lip, sound)
+        sound = self.stt("XP")
+        
+        self.canvas.delete(self.cat_says)
+
+        if lip == sound:
+            self.canvas.delete(self.lip_image)
+            self.cat_says = self.canvas.create_text(530, 600, text = "맞았냥~ 다음 문제로 넘어가라냥!", font = self.fontStyle, fill = "black")
+            self.answer.append(self.a_list[self.count_quiz - 1])
+
+        else:
+            self.cat_says = self.canvas.create_text(315, 500, text = "'{}'이라고 말했냥~\n입모양에 문제가 있는 것 같다 냥! 아래처럼 해보는 건 어떻냥?".format(sound), font = self.fontStyle, fill = "black", anchor="nw")
+            self.tmp_lip_image = PIL.ImageTk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\photos\lips\a.gif")
+            self.lip_image = self.canvas.create_image(315, 560, image=self.tmp_lip_image, anchor="nw")
+            self.no_answer.append(self.a_list[self.count_quiz - 1])
 
     def suffle_quiz(self):
         print("Suffle!")
+
         if self.count_quiz == self.len_quiz:
             self.show_result()
         else:
             self.canvas.delete("all")
             self.canvas.create_image(0, 0, image = self.bg_image, anchor = "nw")
             self.canvas.create_image(650, 310, image=self.img_list[self.count_quiz])
+            self.cat_says = self.canvas.create_text(400, 600, text = "화이팅하라냥~", font = self.fontStyle, fill = "black")
             self.count_quiz += 1
 
     def show_result(self):
         self.end = True
+        self.canvas.delete(self.cat_says)
 #        self.canvas.delete("all")
 
         self.bg_image = tk.PhotoImage(file = r'D:\capstone\2021-1\project\Speech-with-kitty\assets\next4.png')
         self.canvas.create_image(0, 0, image = self.bg_image, anchor = "nw")
+
+        answers = ""
+        no_answers = ""
+
+        for a in self.answer:
+            answers += a + "\n"
+
+        for a in self.no_answer:
+            no_answers += a + "\n"
+
+        self.canvas.create_text(235, 215, text = answers, font = self.fontStyle, fill = "black")
+        self.canvas.create_text(825, 215, text = no_answers, font = self.fontStyle, fill = "black")
+        self.cat_says = self.canvas.create_text(400, 600, text = "수고했냥~", font = self.fontStyle, fill = "black")
+
 
     def update(self):
         ret, frame = self.vid.get_frame()

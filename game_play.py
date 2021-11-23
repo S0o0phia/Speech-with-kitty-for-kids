@@ -33,15 +33,6 @@ class App:
         self.window.title(window_title)
         self.fontStyle=tkFont.Font(family="카페24 써라운드", size=10)        
 
-        ear = cv2.imread('assets/ear.png', cv2.IMREAD_COLOR)
-        ear = cv2.resize(ear, (300, 300), interpolation = cv2.INTER_CUBIC)
-        mask = cv2.cvtColor(ear, cv2.COLOR_BGR2GRAY)
-        mask[mask[:] == 255] = -1
-        mask[mask[:] >= 0] = 255
-        mask[mask[:] == -1] = 0
-        self.mask_inv = cv2.bitwise_not(mask)
-        self.ear = cv2.bitwise_and(ear, ear, mask=mask)
-
         self.timer=()
         self.vid = VideoCapture(self.video_source)
         self.audio_t = None
@@ -71,26 +62,30 @@ class App:
         self.count_quiz = 0
         self.len_quiz = len(self.img_list)
         self.suffle_quiz()
+        self.update()
         #self.canvas.create_image(300, 310, image=ga_img1)
         #self.canvas.create_image(650, 310, image=ga_img2)
         #self.canvas.create_image(1000, 310, image=ga_img3)
 
         self.button_list = []
-        btn_start=tk.Button(window, text='들어봐!', background="#FFE8FF", font = self.fontStyle, command=self.open_camera)
-        btn_start.pack(side = tk.LEFT)
-        btn_next=tk.Button(window, text='다른 문제', background="#FFE8FF", font = self.fontStyle, command=self.suffle_quiz)
-        btn_next.pack(side = tk.LEFT)
-        btn_submit = tk.Button(window, text = "결과확인", background="#FFE8FF", font = self.fontStyle, command=self.show_result)
-        btn_submit.pack(side = tk.RIGHT)
-
-        self.cat_says = None
-        self.lip_image = None
-        self.tmp_lip_image = None
+        btn_start=tk.Button(self.window, text='들어봐!', background="#FFE8FF", font = self.fontStyle, command=self.open_camera)
+        btn_start.pack(side = tk.LEFT, fill="both", expand=True)
+        btn_next=tk.Button(self.window, text='다른 문제', background="#FFE8FF", font = self.fontStyle, command=self.suffle_quiz)
+        btn_next.pack(side = tk.LEFT, fill="both", expand=True)
+        btn_submit = tk.Button(self.window, text = "결과확인", background="#FFE8FF", font = self.fontStyle, command=self.show_result)
+        btn_submit.pack(side = tk.RIGHT, fill="both", expand=True)
+        
         self.button_list.append(btn_start)
         self.button_list.append(btn_next)
         self.button_list.append(btn_submit)
 
-        self.update()
+        self.hearing = None
+        self.thinking = None
+        self.cat_says = None
+        self.lip_image = None
+        self.tmp_lip_image = None
+        self.hearing_image = tk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\assets\ear.png")
+        self.thinking_image = tk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\assets\loading.png")
 
         self.window.mainloop()
 
@@ -111,6 +106,23 @@ class App:
             print(e)
         
         return value
+
+    def korean_to_be_englished(self, word):
+        CHOSUNG_LIST = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
+        JUNGSUNG_LIST = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ']
+        JONGSUNG_LIST = [' ', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
+        
+        r_lst = []
+        
+        for w in list(word.strip()):
+            if '가' <= w <= '힣':
+                ch1 = (ord(w) - ord('가')) // 588
+                ch2 = ((ord(w) - ord('가')) - (588*ch1)) // 28
+                ch3 = (ord(w) - ord('가')) - (588 * ch1) - 28 * ch2
+                r_lst.append([CHOSUNG_LIST[ch1], JUNGSUNG_LIST[ch2], JONGSUNG_LIST[ch3]])
+            else:   r_lst.append([w])
+                
+        return r_lst
         
     def startTimer(self):
         global count
@@ -136,7 +148,12 @@ class App:
         elif self.a_list[self.count_quiz - 1] in self.no_answer:
             self.no_answer.remove(self.a_list[self.count_quiz - 1])
 
-        self.canvas.delete(self.lip_image)
+#        self.canvas.delete(self.lip_image)
+        self.canvas.delete("all")
+        self.canvas.create_image(0, 0, image = self.bg_image, anchor = "nw")
+        self.canvas.create_image(650, 310, image=self.img_list[self.count_quiz - 1])
+        self.hearing = self.canvas.create_image(300, 500, image=self.hearing_image, anchor="nw")
+#        self.cat_says = self.canvas.create_text(400, 600, text = "듣는중이냥!", font = self.fontStyle, fill = "white")
 
         self.ok = True
         print("camera opened => Recording Start ...")
@@ -146,29 +163,62 @@ class App:
 
     def close_camera(self):
         self.audio_t.join()
+        self.canvas.delete(self.hearing)
+        self.thinking = self.canvas.create_image(300, 500, image=self.thinking_image, anchor="nw")
         self.ok = False
         print("camera closed => Recording Stopped")
         args = self.vid.args
-#        video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
-#        lip = self.model.predict(video)
+        video, _ = videos.load_video('./' + args.name[0] + '.' + args.type[0])
+        lip = self.model.predict(video)
+        origin = self.a_list[self.count_quiz - 1]
         lip = self.a_list[self.count_quiz - 1]
         self.vid.out.release()
         os.remove('selfCam.avi')
         self.vid.out = cv2.VideoWriter(args.name[0] + '.' + args.type[0] , self.vid.fourcc , 29.97, self.vid.res)
         sound = self.stt("XP")
-        
-        self.canvas.delete(self.cat_says)
 
-        if lip == sound:
+        self.canvas.delete("all")
+        self.canvas.create_image(0, 0, image = self.bg_image, anchor = "nw")
+        self.canvas.create_image(650, 310, image=self.img_list[self.count_quiz - 1])
+        print('Done!')
+
+        if lip == origin and sound == origin:
             self.canvas.delete(self.lip_image)
-            self.cat_says = self.canvas.create_text(530, 600, text = "맞았냥~ 다음 문제로 넘어가라냥!", font = self.fontStyle, fill = "black")
-            self.answer.append(self.a_list[self.count_quiz - 1])
+            self.cat_says = self.canvas.create_text(400, 600, text = "맞았냥~ 다음 문제로 넘어가라냥!", font = self.fontStyle, fill = "black")
+            self.answer.append(origin)
 
         else:
-            self.cat_says = self.canvas.create_text(315, 500, text = "'{}'이라고 말했냥~\n입모양에 문제가 있는 것 같다 냥! 아래처럼 해보는 건 어떻냥?".format(sound), font = self.fontStyle, fill = "black", anchor="nw")
-            self.tmp_lip_image = PIL.ImageTk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\photos\lips\a.gif")
-            self.lip_image = self.canvas.create_image(315, 560, image=self.tmp_lip_image, anchor="nw")
-            self.no_answer.append(self.a_list[self.count_quiz - 1])
+            spl_ori = self.korean_to_be_englished(origin)
+            spl_stt = self.korean_to_be_englished(sound)
+
+            if len(spl_stt) > len(spl_ori):            
+                self.canvas.delete(self.lip_image)
+                self.cat_says = self.canvas.create_text(400, 600, text = "아웅~~ 조금만 짧게 말해줘라냥!", font = self.fontStyle, fill = "black")
+
+            elif len(spl_stt) < len(spl_ori):            
+                self.canvas.delete(self.lip_image)
+                self.cat_says = self.canvas.create_text(400, 600, text = "조금만! 기일게 말해줘라냥!", font = self.fontStyle, fill = "black")
+
+            else:
+                diff_col = False
+
+                for i in range(0, len(spl_stt)):
+                    for j in range(0, len(spl_stt[i])):
+                        if (spl_stt[i][j] != spl_ori[i][j]) and (j % 2 == 1):
+                            diff_col = True
+
+                if diff_col:
+                    self.cat_says = self.canvas.create_text(315, 500, text = "'{}'이라고 말했냥~\n입모양에 문제가 있는 것 같다 냥! 입을 이렇게 벌려보면 어떻냥?".format(sound), font = self.fontStyle, fill = "black", anchor="nw")
+                    self.tmp_lip_image = PIL.ImageTk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\photos\lips\a.gif")
+                    self.lip_image = self.canvas.create_image(315, 560, image=self.tmp_lip_image, anchor="nw")
+                    
+                else:
+                    self.cat_says = self.canvas.create_text(315, 520, text = "'{}'이라고 말했냥~\n혀 위치에 문제가 있는 것 같다 냥! 혀를 이 위치에 대야한다냥?".format(sound), font = self.fontStyle, fill = "black", anchor="nw")
+                    self.tmp_lip_image = PIL.ImageTk.PhotoImage(file=r"D:\capstone\2021-1\project\Speech-with-kitty\photos\tough\a.gif")
+                    self.lip_image = self.canvas.create_image(315, 560, image=self.tmp_lip_image, anchor="nw")
+                
+                self.no_answer.append(origin)
+                    
 
     def suffle_quiz(self):
         print("Suffle!")
@@ -185,6 +235,9 @@ class App:
     def show_result(self):
         self.end = True
         self.canvas.delete(self.cat_says)
+
+        for btn in self.button_list:
+            btn.pack_forget()
 #        self.canvas.delete("all")
 
         self.bg_image = tk.PhotoImage(file = r'D:\capstone\2021-1\project\Speech-with-kitty\assets\next4.png')
@@ -203,20 +256,12 @@ class App:
         self.canvas.create_text(825, 215, text = no_answers, font = self.fontStyle, fill = "black")
         self.cat_says = self.canvas.create_text(400, 600, text = "수고했냥~", font = self.fontStyle, fill = "black")
 
-
     def update(self):
         ret, frame = self.vid.get_frame()
         frame_show = frame
 
         if self.ok:
             self.vid.out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
-
-            h, w, c = self.ear.shape
-            fh = 720 - h
-            roi = frame_show[fh : fh + h, 0 : w]
-            back = cv2.bitwise_and(roi, roi, mask=self.mask_inv)
-            dst = cv2.add(self.ear, back)
-            frame_show[fh : fh + h, 0 : w] = dst
 
         if ret and not self.end:
             frame_show = cv2.resize(frame_show, (340, 180))
@@ -269,7 +314,6 @@ class VideoCapture:
             self.out.release()
             cv2.destroyAllWindows()
 
-
 class CommandLineParser:    
     def __init__(self):
         parser=argparse.ArgumentParser()
@@ -279,10 +323,34 @@ class CommandLineParser:
 
         self.args = parser.parse_args()
 
-def main():
+def play_game():
+    global root
+    root.destroy()
+
     opt = __import__('options')
     os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu
     App(tk.Tk(), '냥냥이랑 놀자!', opt)
 
+def main():
+    global root
+    global my_canvas
+    bg = tk.PhotoImage(file = r'D:\capstone\2021-1\project\Speech-with-kitty\assets\main_merged.png')
+
+    my_canvas = tk.Canvas(root, width=1280, height=720)
+    my_canvas.pack(fill = "both", expand = True)
+
+    my_canvas.create_image(0,0, image = bg, anchor = "nw")
+    fontStyle=tkFont.Font(family="카페24 써라운드", size=30)
+    button1 = tk.Button(my_canvas, width=7, height=2, text = "게임시작", background="#FFE8FF", font = fontStyle, command=play_game)
+    my_canvas.create_window(200, 550, anchor="nw", window=button1)
+
+    root.mainloop()
+
 if __name__ == "__main__":
+    global root
+    root = tk.Tk()
+    root.call('wm', 'iconphoto', root._w, tk.PhotoImage(file='./assets/icon.png'))
+    root.geometry("1280x720")
+    root.resizable(False, False)
+
     main()
